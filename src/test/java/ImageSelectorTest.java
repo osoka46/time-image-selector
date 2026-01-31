@@ -37,6 +37,11 @@ public class ImageSelectorTest {
     }
 
     @Test
+    public void testToFail() {
+        Assertions.assertEquals("night.jpgTest", selector.selectImage("23:00"));
+    }
+
+    @Test
     public void testInvalidInput() {
         Assertions.assertEquals("broken_watch.jpg", selector.selectImage("potato"));
         Assertions.assertEquals("broken_watch.jpg", selector.selectImage("25:00")); // invalid time
