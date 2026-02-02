@@ -1,0 +1,49 @@
+pipeline {
+    agent none // No global agent.
+
+    // TRIGGER: Runs on the 1st and 15th of every month (Bi-weekly schedule)
+    triggers {
+        cron('H H 1,15 * *')
+    }
+
+    tools {
+        maven 'Maven-3.9' // managed in Jenkins Global Tools
+    }
+
+    stages {
+        stage('Bi-Weekly Regression Test') {
+            agent { label 'regression' } // Runs strictly on the 'regression' worker node
+            steps {
+                echo 'Full Regression Test suite is starting...'
+                // Executes only tests tagged with @Tag("regression")
+                sh 'mvn clean test -Dgroups=regression'
+            }
+            post {
+                always {
+                    // Archives test results found in the worker's directory
+                    junit '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('Notification') {
+            agent any
+            steps {
+                script {
+                    mail to: 'tursubidonu1@gmail.com',
+                         subject: "BI-WEEKLY REGRESSION REPORT: ${currentBuild.currentResult}",
+                         body: """
+                            The comprehensive 2-week regression cycle is complete.
+
+                            Status: ${currentBuild.currentResult}
+                            Build Number: ${env.BUILD_NUMBER}
+                            Report Link: ${env.BUILD_URL}
+
+                            Regards,
+                            Jenkins Automation System
+                         """
+                }
+            }
+        }
+    }
+}

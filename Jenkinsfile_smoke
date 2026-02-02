@@ -1,0 +1,50 @@
+pipeline {
+    agent none // not assign a global node; specific agents are defined per stage.
+
+    // TRIGGER: Runs daily between 03:00 AM and 03:59 AM
+    // 'H' (Hash) is used to distribute the load, Jenkins selects the exact minute.
+    triggers {
+        cron('H 3 * * *')
+    }
+
+    tools {
+        maven 'Maven-3.9' // managed in Jenkins Global Tools
+    }
+
+    stages {
+        stage('Daily Smoke Test') {
+            agent { label 'smoke' } // Runs strictly on the 'smoke' worker node
+            steps {
+                echo 'Good Morning! Daily Smoke Test is starting...'
+                // Executes only tests tagged with @Tag("smoke")
+                sh 'mvn clean test -Dgroups=smoke'
+            }
+            post {
+                always {
+                    // Archives test results found in the worker's directory
+                    junit '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('Notification') {
+            agent any // Notification can be sent from any available node (Controller or Worker)
+            steps {
+                script {
+                    mail to: 'tursubidonu1@gmail.com',
+                         subject: "DAILY SMOKE REPORT: ${currentBuild.currentResult}",
+                         body: """
+                            Daily health check completed.
+
+                            Status: ${currentBuild.currentResult}
+                            Build Number: ${env.BUILD_NUMBER}
+                            Report Link: ${env.BUILD_URL}
+
+                            Regards,
+                            Jenkins Automation System
+                         """
+                }
+            }
+        }
+    }
+}
