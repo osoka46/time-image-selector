@@ -16,6 +16,13 @@ pipeline {
                         echo 'Starting smoke testing...'
                         sh 'mvn clean test -Dgroups=smoke'
                     }
+                    post {
+                            always {
+
+                                junit '**/target/surefire-reports/*.xml'
+                                echo 'Done.'
+                            }
+                        }
                 }
 
                 // Regression
@@ -25,16 +32,15 @@ pipeline {
                         echo 'Starting regression testing...'
                         sh 'mvn clean test -Dgroups=regression'
                     }
+                    post {
+                            always {
+
+                                junit '**/target/surefire-reports/*.xml'
+                                echo 'Done.'
+                            }
+                        }
                 }
             }
-        }
-    }
-
-    post {
-        always {
-
-            junit '**/target/surefire-reports/*.xml'
-            echo 'Done.'
         }
     }
 }
